@@ -10,20 +10,21 @@ import mimetypes
 import os
 import sqlite3
 import threading
+import time
 import webbrowser
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from monitor import PASTA, Monitor, carregar_config, criar_detector
+from monitor import PASTA, Monitor, carregar_config, criar_detector, fonte_real
 
 ESTATICOS = PASTA / "painel"
 LIMITE_LISTA = 200
 
 
 class Painel(BaseHTTPRequestHandler):
-    monitor: Monitor = None
+    monitores: list = []
     banco: str = None
 
     def log_message(self, *args):  # sem log de cada requisição no console
@@ -70,8 +71,11 @@ class Painel(BaseHTTPRequestHandler):
                 return self._infracoes(parse_qs(url.query))
             if rota.startswith("/api/infracoes/") and rota.endswith("/foto"):
                 return self._foto(rota.split("/")[3])
-            if rota == "/video.mjpg":
-                return self._video()
+            if rota.startswith("/video/") and rota.endswith(".mjpg"):  # /video/0.mjpg, /video/1.mjpg...
+                n = rota[len("/video/"):-len(".mjpg")]
+                if n.isdigit() and int(n) < len(self.monitores):
+                    return self._video(self.monitores[int(n)])
+                return self._json({"erro": "câmera não encontrada"}, 404)
             nome = "index.html" if rota == "/" else rota.lstrip("/")
             alvo = (ESTATICOS / nome).resolve()
             if ESTATICOS.resolve() not in alvo.parents:  # impede sair da pasta painel/
@@ -83,8 +87,11 @@ class Painel(BaseHTTPRequestHandler):
     def _status(self):
         hoje = datetime.now().strftime("%Y-%m-%d")
         (total_hoje,), = self._consultar("SELECT COUNT(*) FROM infracoes WHERE data_hora >= ?", (hoje,)) or [(0,)]
-        self._json({**self.monitor.estado, "infracoes_hoje": total_hoje,
-                    "hora": datetime.now().isoformat(timespec="seconds")})
+        primeiro = self.monitores[0].estado
+        self._json({"motor": primeiro["motor"], "epis": primeiro["epis"],
+                    "tempo_minimo_s": primeiro["tempo_minimo_s"], "infracoes_hoje": total_hoje,
+                    "hora": datetime.now().isoformat(timespec="seconds"),
+                    "cameras": [m.estado for m in self.monitores]})
 
     def _infracoes(self, q):
         dias = int(q.get("dias", ["1"])[0])
@@ -111,14 +118,14 @@ class Painel(BaseHTTPRequestHandler):
             return self._json({"erro": "não encontrado"}, 404)
         self._arquivo(Path(linha[0][0]))
 
-    def _video(self):
+    def _video(self, monitor):
         self.send_response(200)
         self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=quadro")
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         jpeg = None
-        while not self.monitor.parar.is_set():
-            novo = self.monitor.aguardar_jpeg(jpeg)
+        while not monitor.parar.is_set():
+            novo = monitor.aguardar_jpeg(jpeg)
             if novo is None or novo is jpeg:
                 continue
             jpeg = novo
@@ -130,7 +137,8 @@ def main():
     os.chdir(PASTA)
     ap = argparse.ArgumentParser(description="Tela web do Monitor de EPI")
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--fonte", help="sobrescreve camera.fonte do config")
+    ap.add_argument("--fonte", action="append",
+                    help="sobrescreve a fonte das câmeras, na ordem (pode repetir: --fonte a.mp4 --fonte b.mp4)")
     ap.add_argument("--modelo", help="usa um modelo .pt local (ignora o motor do config)")
     ap.add_argument("--nao-abrir", action="store_true", help="não abre o navegador")
     args = ap.parse_args()
@@ -138,26 +146,43 @@ def main():
     cfg = carregar_config(args.config)
     painel_cfg = cfg.get("painel", {})
     host, porta = painel_cfg.get("host", "127.0.0.1"), painel_cfg.get("porta", 8080)
-    fonte = args.fonte if args.fonte is not None else cfg["camera"]["fonte"]
-    detectar_quadro, motor = criar_detector(cfg, args.modelo)
+    cameras = cfg["cameras"]
+    if args.fonte:  # teste com vídeos: --fonte define quantas câmeras e de onde vêm
+        cameras = [{"id": i, "nome": cameras[i]["nome"] if i < len(cameras) else f"Câmera {i + 1}", "fonte": f}
+                   for i, f in enumerate(args.fonte)]
+    for cam in cameras:
+        fonte_real(cam["fonte"])  # falta usuário/senha da câmera? avisa já, antes de subir a tela
 
-    Painel.monitor = Monitor(cfg, fonte, detectar_quadro, motor)
+    # um detector por câmera: cada uma tem o seu rastreamento (números #) independente
+    monitores = []
+    for cam in cameras:
+        detectar_quadro, motor = criar_detector(cfg, args.modelo)
+        monitores.append(Monitor(cfg, cam["fonte"], detectar_quadro, motor, cam["nome"], cam["id"]))
+    Painel.monitores = monitores
     Painel.banco = str(Path(cfg["registro"]["banco"]).resolve())
     servidor = ThreadingHTTPServer((host, porta), Painel)
     servidor.daemon_threads = True
     threading.Thread(target=servidor.serve_forever, daemon=True).start()
 
     endereco = f"http://{'localhost' if host in ('127.0.0.1', '0.0.0.0') else host}:{porta}"
-    print(f"Detecção: {motor}")
+    print(f"Detecção: {motor} · {len(monitores)} câmera(s)")
     print(f"Tela aberta em {endereco}  (Ctrl+C para encerrar)")
     if not args.nao_abrir:
         webbrowser.open(endereco)
+    threads = [threading.Thread(target=m.executar, kwargs={"publicar_jpeg": True}, daemon=True) for m in monitores]
+    for t in threads:
+        t.start()
     try:
-        Painel.monitor.executar(publicar_jpeg=True)
+        while any(t.is_alive() for t in threads):
+            time.sleep(0.5)
+        print("Todas as câmeras encerraram. A tela continua aberta com o histórico (Ctrl+C para sair).")
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
         pass
     finally:
-        Painel.monitor.parar.set()
+        for m in monitores:
+            m.parar.set()
         servidor.shutdown()
 
 

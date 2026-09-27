@@ -18,6 +18,7 @@ Câmera (webcam / RTSP / vídeo) → YOLO (detecção) → Regras (tempo mínimo
 | `regras.py` | Lógica de "essa pessoa está sem EPI?" |
 | `registro.py` | Salva infrações (SQLite) e fotos em `registros/AAAA-MM-DD/` |
 | `alertas.py` | Bipe + mensagem no console |
+| `segredos.py` | Lê senhas/chaves das variáveis do Windows (nunca de arquivo) |
 | `relatorio.py` | Gera `registros/relatorio.html` com totais, gráfico por hora e fotos |
 | `detector_roboflow.py` | Detecção pelo workflow do Roboflow + rastreamento local |
 | `workflows/epi_workflow.json` | Definição do workflow (modelo `construction-site-safety/27`) |
@@ -101,9 +102,34 @@ vídeo ao vivo com as detecções e a lista de infrações com foto, filtrável 
 Para abrir de outro PC ou celular na rede, mude `painel.host` para `"0.0.0.0"` no `config.yaml`
 (a tela não tem senha — só em rede confiável).
 
-### Câmera IP
+### Câmeras Tapo (TP-Link)
 
-Coloque o link RTSP em `camera.fonte`. Formatos comuns:
+O programa **não usa a conta Tapo na nuvem** (a TP-Link não libera o vídeo da nuvem para outros
+programas). Ele recebe o vídeo **direto de cada câmera, pela rede local (RTSP)**. O PC precisa estar
+na **mesma rede** (mesmo roteador/Wi-Fi) que as câmeras.
+
+1. **Criar a conta da câmera** (uma vez, vale para todas se usar os mesmos dados): no app Tapo, abra a
+   câmera → ⚙️ **Configurações** → **Configurações avançadas** → **Conta da câmera** → crie usuário e senha.
+   *Não é* o login da sua conta Tapo.
+2. **Descobrir o IP**: no app, câmera → ⚙️ → **Informações do dispositivo** → **Endereço IP**.
+   Dica: no roteador, fixe esse IP (reserva de DHCP) para ele não mudar.
+3. **Guardar usuário e senha no Windows** (PowerShell):
+   ```
+   setx TAPO_USUARIO "usuario_da_camera"
+   setx TAPO_SENHA "senha_da_camera"
+   ```
+4. **No `config.yaml`**, em `cameras:`, troque o IP de cada Tapo e mude `ativa: false` para `true`.
+   Use `stream1` (alta resolução) ou `stream2` (mais leve).
+5. Teste antes no VLC: *Mídia → Abrir fluxo de rede* →
+   `rtsp://usuario:senha@IP:554/stream1`.
+
+Observações: modelos Tapo **a bateria** (ex.: C400, C420, D230) geralmente **não têm RTSP**.
+Algumas câmeras aceitam no máximo 2 conexões RTSP ao mesmo tempo (VLC + monitor contam como 2).
+Com o Roboflow, **cada câmera** gasta créditos separadamente — com várias câmeras, prefira o modelo local.
+
+### Outras câmeras IP
+
+Coloque o link RTSP na `fonte` da câmera. Formatos comuns:
 
 - Intelbras / Dahua: `rtsp://usuario:senha@IP:554/cam/realmonitor?channel=1&subtype=0`
 - Hikvision: `rtsp://usuario:senha@IP:554/Streaming/Channels/101`

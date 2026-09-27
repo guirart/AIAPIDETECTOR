@@ -2,13 +2,28 @@
 #  Monitor de EPI - configuração
 # ============================================================
 
-camera:
-  nome: "Camera 01 - Galpao"
-  # Fonte do vídeo:
-  #   0                                   -> webcam do PC
-  #   "videos/teste.mp4"                  -> arquivo de vídeo
-  #   "rtsp://usuario:senha@192.168.1.64:554/Streaming/Channels/101"  -> câmera IP
-  fonte: 0
+# Câmeras monitoradas. Cada uma aparece num quadro da tela. "ativa: false" desliga sem apagar.
+# Fonte do vídeo:
+#   0                        -> webcam do PC
+#   "videos/teste.mp4"       -> arquivo de vídeo
+#   "rtsp://..."             -> câmera IP (Tapo: veja README, seção "Câmeras Tapo")
+#
+# Tapo: rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@IP_DA_CAMERA:554/stream1
+#   stream1 = alta resolução (melhor para detectar de longe) | stream2 = baixa (mais leve)
+#   O usuário e a senha NÃO ficam aqui: ${TAPO_USUARIO} e ${TAPO_SENHA} são lidos do Windows
+#   (setx TAPO_USUARIO "..." e setx TAPO_SENHA "..."), para não irem parar no GitHub.
+cameras:
+  - nome: "Câmera do PC"
+    fonte: 0
+    ativa: true
+
+  - nome: "Tapo 1"
+    fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.100:554/stream1"
+    ativa: false   # troque o IP e mude para true
+
+  - nome: "Tapo 2"
+    fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.101:554/stream1"
+    ativa: false
 
 modelo:
   # Onde a detecção roda:
@@ -46,8 +61,8 @@ regras:
 desempenho:
   # Analisa 1 a cada N quadros (CPU sem placa de vídeo: 2 a 4 é bom)
   processar_a_cada_n_quadros: 3
-  # Câmera ao vivo: intervalo mínimo entre análises. Com o Roboflow, cada análise gasta
-  # 1 crédito (1 s = até 3.600 por hora); aumente para economizar.
+  # Câmera ao vivo: intervalo mínimo entre análises, POR CÂMERA. Com o Roboflow, cada análise
+  # gasta 1 crédito (1 s = até 3.600 por hora por câmera); aumente para economizar.
   intervalo_minimo_analise_s: 1.0
 
 alertas:

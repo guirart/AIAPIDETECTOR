@@ -149,7 +149,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 48px; }
 .section-head .count { font: 700 14px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 
 /* ---------- Câmera ---------- */
-.cameras { display: grid; grid-template-columns: minmax(0, 760px); gap: 14px; }
+.cameras { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.cameras.uma { grid-template-columns: minmax(0, 760px); }
 .cam { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; transition: border-color .3s, box-shadow .3s; }
 .cam.bad { border-color: rgb(255 49 72 / .7); box-shadow: 0 0 0 3px rgb(255 49 72 / .18); }
 .cam.off { border-color: rgb(255 176 32 / .45); }

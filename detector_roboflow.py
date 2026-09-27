@@ -17,24 +17,12 @@ with warnings.catch_warnings():
     import supervision as sv
 
 from regras import Deteccao
-
-
-def ler_chave():
-    """Variável de ambiente; no Windows, também a gravada pelo setx (vale sem reabrir o terminal)."""
-    chave = os.environ.get("ROBOFLOW_API_KEY", "").strip()
-    if not chave and os.name == "nt":
-        import winreg
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as reg:
-                chave = str(winreg.QueryValueEx(reg, "ROBOFLOW_API_KEY")[0]).strip()
-        except OSError:
-            pass
-    return chave
+from segredos import ler_variavel
 
 
 class DetectorRoboflow:
     def __init__(self, cfg_roboflow, mapa_classes, confianca):
-        self.api_key = ler_chave()
+        self.api_key = ler_variavel("ROBOFLOW_API_KEY")
         if not self.api_key:
             raise SystemExit(
                 "Falta a chave do Roboflow. No PowerShell rode (com a SUA chave):\n"

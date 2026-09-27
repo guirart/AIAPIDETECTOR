@@ -19,6 +19,10 @@ import yaml
 from alertas import Alertas
 from registro import NOMES_EPI, Registro
 from regras import ControleTemporal, Deteccao, avaliar_quadro
+from segredos import expandir, mascarar
+
+# Câmeras IP (Tapo e outras): RTSP por TCP é bem mais estável que UDP em Wi-Fi
+os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
 
 PASTA = Path(__file__).resolve().parent
 VERDE, VERMELHO, AMARELO, BRANCO = (60, 180, 75), (40, 40, 230), (0, 200, 255), (255, 255, 255)
@@ -153,8 +157,20 @@ def desenhar(quadro, deteccoes, situacoes, camera, total_infracoes, alerta_ativo
 
 # ---------------------------------------------------------------- principal
 def carregar_config(caminho):
+    """Lê o config e normaliza as câmeras para cfg["cameras"] = [{id, nome, fonte}, ...]."""
     with open(caminho, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    cameras = cfg.get("cameras") or [cfg["camera"]]  # aceita o formato antigo (uma câmera)
+    cfg["cameras"] = [{"id": i, "nome": c.get("nome") or f"Câmera {i + 1}", "fonte": c["fonte"]}
+                      for i, c in enumerate(cameras) if c.get("ativa", True)]
+    if not cfg["cameras"]:
+        sys.exit("Nenhuma câmera ativa no config.yaml.")
+    return cfg
+
+
+def fonte_real(fonte):
+    """Troca ${VARIAVEL} pelo valor guardado no Windows (usuário/senha da câmera)."""
+    return expandir(fonte) if isinstance(fonte, str) else fonte
 
 
 def criar_detector(cfg, modelo_forcado=None):
@@ -185,10 +201,10 @@ class Monitor:
     DURACAO_ALERTA_S = 8
     HISTORICO = 35  # quantas análises recentes a tela mostra na barrinha da câmera
 
-    def __init__(self, cfg, fonte, detectar_quadro, descricao_motor):
+    def __init__(self, cfg, fonte, detectar_quadro, descricao_motor, nome="Câmera 1", id_camera=0):
         self.cfg, self.fonte = cfg, fonte
         self.detectar_quadro = detectar_quadro
-        self.camera = cfg["camera"]["nome"]
+        self.camera, self.id_camera = nome, id_camera
         self.regras = cfg["regras"]
         self.parar = threading.Event()
         self._trava = threading.Lock()
@@ -197,7 +213,7 @@ class Monitor:
         self._deteccoes, self._situacoes = [], []
         self._alerta_texto, self._alerta_ate = None, 0.0
         self.estado = {
-            "camera": self.camera, "motor": descricao_motor, "epis": self.regras["epis_obrigatorios"],
+            "id": id_camera, "camera": self.camera, "motor": descricao_motor, "epis": self.regras["epis_obrigatorios"],
             "tempo_minimo_s": self.regras["tempo_minimo_s"],
             "online": False, "pessoas": 0, "irregulares": 0, "infracoes_sessao": 0,
             "alerta": None, "ultima_analise_s": None, "erro": None, "historico": [],
@@ -247,7 +263,7 @@ class Monitor:
 
     # ----- loop principal
     def executar(self, mostrar_janela=False, publicar_jpeg=False):
-        fonte_video, ao_vivo = abrir_fonte(self.fonte)
+        fonte_video, ao_vivo = abrir_fonte(fonte_real(self.fonte))
         registro = Registro(self.cfg["registro"]["pasta"], self.cfg["registro"]["banco"])
         alertas = Alertas(som=self.cfg["alertas"]["som"])
         controle = ControleTemporal(self.regras["tempo_minimo_s"], self.regras["intervalo_repeticao_s"])
@@ -256,7 +272,7 @@ class Monitor:
             threading.Thread(target=self._trabalhador, args=(fonte_video, controle, registro, alertas),
                              daemon=True).start()
 
-        print(f"Monitorando '{self.camera}' (fonte: {self.fonte}).")
+        print(f"Monitorando '{self.camera}' (fonte: {mascarar(self.fonte)}).")
         n_quadro, ultimo_publicado = 0, 0.0
         # vídeo gravado exibido na tela: toca na velocidade real (sem tela, processa o mais rápido possível)
         ritmo = not ao_vivo and (mostrar_janela or publicar_jpeg)
@@ -322,16 +338,18 @@ def main():
     os.chdir(PASTA)  # caminhos relativos do config valem a partir da pasta do projeto
     ap = argparse.ArgumentParser(description="Monitor de EPI (janela). Para a tela web use painel.py")
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--fonte", help="sobrescreve camera.fonte do config")
+    ap.add_argument("--camera", type=int, default=1, help="qual câmera da lista do config (1, 2, ...)")
+    ap.add_argument("--fonte", help="sobrescreve a fonte da câmera escolhida")
     ap.add_argument("--modelo", help="usa um modelo .pt local (ignora o motor do config)")
     ap.add_argument("--sem-janela", action="store_true", help="roda sem abrir janela de vídeo")
     args = ap.parse_args()
 
     cfg = carregar_config(args.config)
-    fonte = args.fonte if args.fonte is not None else cfg["camera"]["fonte"]
+    cam = cfg["cameras"][max(0, min(args.camera, len(cfg["cameras"])) - 1)]
+    fonte = args.fonte if args.fonte is not None else cam["fonte"]
     detectar_quadro, motor = criar_detector(cfg, args.modelo)
     print(f"Detecção: {motor}. Pressione Q na janela para sair.")
-    monitor = Monitor(cfg, fonte, detectar_quadro, motor)
+    monitor = Monitor(cfg, fonte, detectar_quadro, motor, cam["nome"], cam["id"])
     try:
         monitor.executar(mostrar_janela=cfg["alertas"]["mostrar_janela"] and not args.sem_janela)
     except KeyboardInterrupt:
