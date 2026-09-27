@@ -21,12 +21,20 @@ cameras:
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.160:554/stream1"
     ativa: false   # ligar quando o PC estiver na rede MINAS NOVAS
 
+  # App Tapo rodando no BlueStacks (emulador Android) neste PC: pega a câmera pela nuvem da Tapo,
+  # de qualquer rede. Abra a câmera no app e deixe a janela do BlueStacks aberta (sem minimizar).
+  - nome: "ALMOXARIFADO"
+    fonte: "janela:BlueStacks App Player"
+    # só a área do vídeo, sem a barra de cima e os botões da direita: [esquerda, topo, direita, base]
+    recorte: [0, 0.168, 0.668, 0.833]
+    ativa: true
+
   # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
   - nome: "ALMOXARIFADO (celular)"
     fonte: "janela:ApowerMirror Live"
     # corta a coluna de botões do app Tapo (8% da direita): [esquerda, topo, direita, base]
     recorte: [0, 0, 0.92, 1]
-    ativa: true
+    ativa: false
 
   - nome: "Tapo 2"
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.101:554/stream1"
