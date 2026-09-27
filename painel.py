@@ -146,6 +146,7 @@ def main():
     cfg = carregar_config(args.config)
     painel_cfg = cfg.get("painel", {})
     host, porta = painel_cfg.get("host", "127.0.0.1"), painel_cfg.get("porta", 8080)
+    porta = int(os.environ.get("PORT", porta))  # quem inicia o servidor pode escolher a porta
     cameras = cfg["cameras"]
     if args.fonte:  # teste com vídeos: --fonte define quantas câmeras e de onde vêm
         cameras = [{"id": i, "nome": cameras[i]["nome"] if i < len(cameras) else f"Câmera {i + 1}", "fonte": f}

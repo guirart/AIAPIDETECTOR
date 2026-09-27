@@ -77,7 +77,8 @@ function renderCamera(c) {
   const hist = c.historico || [];
   const vazios = Array(Math.max(0, 35 - hist.length)).fill('');
   card.querySelector('.meter').innerHTML = [...vazios, ...hist].map((h) => `<i class="${h}"></i>`).join('');
-  card.querySelector('.meta').innerHTML = `Pessoas <b>${c.pessoas}</b> · Sem EPI <b class="${c.irregulares ? 'bad' : ''}">${c.irregulares}</b> · Nesta sessão <b>${c.infracoes_sessao}</b>`;
+  card.querySelector('.meta').innerHTML = `Pessoas <b>${c.pessoas}</b> · Sem EPI <b class="${c.irregulares ? 'bad' : ''}">${c.irregulares}</b> · Nesta sessão <b>${c.infracoes_sessao}</b>`
+    + (c.coleta_ativa ? ` · Fotos p/ treino hoje <b>${c.fotos_coletadas_hoje ?? 0}</b>` : '');
   card.querySelector('.lat').innerHTML = c.ultima_analise_s != null ? `Análise <b>${c.ultima_analise_s.toFixed(1).replace('.', ',')} s</b>` : '';
   const err = card.querySelector('.err');
   err.hidden = !c.erro;

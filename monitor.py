@@ -18,6 +18,7 @@ import numpy as np
 import yaml
 
 from alertas import Alertas
+from coleta import Coletor
 from registro import NOMES_EPI, Registro
 from regras import ControleTemporal, Deteccao, avaliar_quadro
 from segredos import expandir, mascarar
@@ -236,6 +237,7 @@ class Monitor:
         self.cfg, self.fonte, self.recorte = cfg, fonte, recorte
         self.detectar_quadro = detectar_quadro
         self.camera, self.id_camera = nome, id_camera
+        self.coletor = Coletor(cfg.get("coleta"), nome)
         self.regras = cfg["regras"]
         self.parar = threading.Event()
         self._trava = threading.Lock()
@@ -248,6 +250,7 @@ class Monitor:
             "tempo_minimo_s": self.regras["tempo_minimo_s"],
             "online": False, "pessoas": 0, "irregulares": 0, "infracoes_sessao": 0,
             "alerta": None, "ultima_analise_s": None, "erro": None, "historico": [],
+            "coleta_ativa": self.coletor.ativa, "fotos_coletadas_hoje": None,
         }
 
     # ----- análise (detecção + regras + registro)
@@ -265,6 +268,8 @@ class Monitor:
                                    self.regras.get("confirmar_pela_cabeca", False))
         with self._trava:
             self._deteccoes, self._situacoes = deteccoes, situacoes
+        if erro is None and self.coletor.talvez_salvar(quadro, deteccoes, agora):
+            self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
         for s in controle.atualizar(situacoes, agora):
             self.estado["infracoes_sessao"] += 1
             anotado = desenhar(quadro, deteccoes, situacoes, self.camera, self.estado["infracoes_sessao"], None)

@@ -84,6 +84,15 @@ alertas:
   som: true
   mostrar_janela: true
 
+coleta:
+  # Salva fotos ORIGINAIS da câmera (sem caixas) para treinar o modelo próprio depois.
+  # As fotos mostram funcionários: a pasta não vai para o GitHub.
+  ativa: true
+  pasta: "dataset/fotos_novas"
+  intervalo_s: 10            # com alguém na imagem: no máximo 1 foto a cada 10 s por câmera
+  sem_pessoa_a_cada_s: 600   # sem ninguém: 1 foto a cada 10 min (ensina que latas não são gente)
+  limite_por_dia: 500        # por câmera
+
 painel:
   # 127.0.0.1 = só este PC abre a tela. Use 0.0.0.0 para abrir de outro PC/celular na rede
   # (a tela não tem senha e mostra fotos de funcionários - só libere em rede confiável).
