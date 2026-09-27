@@ -67,11 +67,11 @@ regras:
   # "Sem EPI" detectado sem nenhuma pessoa por perto é ignorado (evita alarme falso em
   # objetos e telas). Deixe false só se o modelo não tiver a classe "pessoa".
   exigir_pessoa: true
-  # true  = só é infração se o modelo VIU a pessoa sem o EPI (ex.: cabeça sem capacete).
+  # true  = só conta como pessoa se o modelo também viu a CABEÇA dela (com ou sem capacete).
   #         Evita alarme em objetos confundidos com pessoa (latas, tonéis, sacos). Pode deixar
-  #         passar alguns casos reais quando a pessoa está muito longe ou de costas.
-  # false = também é infração quando o modelo só não encontrou o EPI (pega mais, erra mais).
-  exigir_evidencia: true
+  #         passar alguém muito longe, em que a cabeça fica pequena demais para o modelo.
+  # false = qualquer "pessoa" detectada vale (pega mais, erra mais).
+  confirmar_pela_cabeca: true
 
 desempenho:
   # Analisa 1 a cada N quadros (CPU sem placa de vídeo: 2 a 4 é bom)

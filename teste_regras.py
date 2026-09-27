@@ -48,17 +48,23 @@ def test_exigir_pessoa_ignora_sem_epi_solto():
     assert avaliar_quadro([PESSOA, COLETE, sem], OBRIG, exigir_pessoa=True)[0].faltando == ["capacete"]
 
 
-def test_exigir_evidencia_ignora_objeto_confundido_com_pessoa():
-    # Alarme falso real: latas de tinta viraram "Person" (74%), sem capacete/colete e sem NO-Hardhat
+def test_confirmar_pela_cabeca_ignora_objeto_confundido_com_pessoa():
+    # Alarme falso real: latas de tinta viraram "Person" (74%), sem cabeça detectada
     latas = Deteccao("pessoa", (218, 407, 287, 568), 0.74, 1)
-    assert avaliar_quadro([latas], OBRIG, exigir_evidencia=True)[0].faltando == []
-    assert avaliar_quadro([latas], OBRIG, exigir_evidencia=False)[0].faltando == ["capacete", "colete"]
+    assert avaliar_quadro([latas], OBRIG, confirmar_pela_cabeca=True) == []
+    assert avaliar_quadro([latas], OBRIG, confirmar_pela_cabeca=False)[0].faltando == ["capacete", "colete"]
 
 
-def test_exigir_evidencia_pega_quem_o_modelo_viu_sem_epi():
+def test_confirmar_pela_cabeca_pega_pessoa_sem_capacete_e_sem_colete():
+    # dataset da Ultralytics não tem "sem colete": o colete é cobrado pela ausência, com a pessoa confirmada
     sem_capacete = Deteccao("sem_capacete", (130, 95, 170, 130), 0.8)
-    s = avaliar_quadro([PESSOA, sem_capacete], OBRIG, exigir_evidencia=True)
-    assert s[0].faltando == ["capacete"]
+    s = avaliar_quadro([PESSOA, sem_capacete], OBRIG, confirmar_pela_cabeca=True)
+    assert s[0].faltando == ["capacete", "colete"]
+
+
+def test_confirmar_pela_cabeca_pessoa_com_capacete_sem_colete():
+    s = avaliar_quadro([PESSOA, CAPACETE], OBRIG, confirmar_pela_cabeca=True)
+    assert s[0].faltando == ["colete"]
 
 
 def test_epi_nao_obrigatorio_ignorado():

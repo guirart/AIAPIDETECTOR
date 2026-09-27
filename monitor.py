@@ -262,7 +262,7 @@ class Monitor:
         situacoes = avaliar_quadro(deteccoes, self.regras["epis_obrigatorios"],
                                    self.regras["altura_minima_pessoa_px"],
                                    self.regras.get("exigir_pessoa", True),
-                                   self.regras.get("exigir_evidencia", False))
+                                   self.regras.get("confirmar_pela_cabeca", False))
         with self._trava:
             self._deteccoes, self._situacoes = deteccoes, situacoes
         for s in controle.atualizar(situacoes, agora):
