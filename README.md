@@ -154,14 +154,18 @@ Teste o link antes no VLC (Mídia → Abrir fluxo de rede). Se a câmera cair, o
 
 ## Coleta de fotos para o modelo próprio
 
-Com `coleta.ativa: true` no `config.yaml`, enquanto o monitor roda ele salva fotos **originais**
-(sem caixas, já com o `recorte` da câmera) em `dataset/fotos_novas/AAAA-MM-DD/`:
-- com alguém na imagem: até 1 foto a cada `intervalo_s` (padrão 10 s) por câmera — nome termina em `_pessoa`;
-- sem ninguém: 1 a cada `sem_pessoa_a_cada_s` (padrão 10 min) — `_vazia` (ensina que latas não são gente);
-- no máximo `limite_por_dia` fotos por câmera. A tela mostra "Fotos p/ treino hoje".
+Com `coleta.ativa: true` no `config.yaml`, enquanto o monitor roda ele tira prints **originais**
+(sem caixas, já com o `recorte` da câmera) e salva na pasta **`Fotos treino EPI` da Área de Trabalho**
+(`coleta.pasta`, com `{AREA_DE_TRABALHO}`), em subpastas por dia:
+- com alguém na imagem: até 1 print a cada `intervalo_s` (padrão 10 s) por câmera — `…_pessoa.jpg`;
+  com `recortar_pessoas: true`, também o recorte de cada pessoa em `<dia>/pessoas/` (para revisar rápido);
+- sem ninguém: 1 a cada `sem_pessoa_a_cada_s` (padrão 10 min) — `…_vazia.jpg` (ensina que latas não são gente);
+- botão **📸 Tirar print** em cada câmera na tela — `…_manual.jpg`, na hora;
+- no máximo `limite_por_dia` prints automáticos por câmera. A tela mostra "Fotos p/ treino hoje".
 
-Revise a pasta antes de marcar as fotos: apague as que não são da câmera (ex.: espelhamento caiu).
-A pasta `dataset/` **não vai para o GitHub** (fotos de funcionários).
+Revise a pasta antes de marcar as fotos: apague as que não são da câmera (ex.: app saiu da câmera).
+As fotos mostram funcionários: não vão para o GitHub. Se a Área de Trabalho estiver no OneDrive,
+elas sobem para a nuvem da Microsoft junto — se não quiser, troque `coleta.pasta` por uma pasta local.
 
 ## Como a decisão é feita
 

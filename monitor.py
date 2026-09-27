@@ -238,6 +238,8 @@ class Monitor:
         self.detectar_quadro = detectar_quadro
         self.camera, self.id_camera = nome, id_camera
         self.coletor = Coletor(cfg.get("coleta"), nome)
+        self._trava_coleta = threading.Lock()
+        self._ultimo_quadro = None  # imagem original mais recente (para o botão "Tirar print")
         self.regras = cfg["regras"]
         self.parar = threading.Event()
         self._trava = threading.Lock()
@@ -268,8 +270,10 @@ class Monitor:
                                    self.regras.get("confirmar_pela_cabeca", False))
         with self._trava:
             self._deteccoes, self._situacoes = deteccoes, situacoes
-        if erro is None and self.coletor.talvez_salvar(quadro, deteccoes, agora):
-            self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
+        if erro is None:
+            with self._trava_coleta:
+                if self.coletor.talvez_salvar(quadro, deteccoes, agora):
+                    self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
         for s in controle.atualizar(situacoes, agora):
             self.estado["infracoes_sessao"] += 1
             anotado = desenhar(quadro, deteccoes, situacoes, self.camera, self.estado["infracoes_sessao"], None)
@@ -338,6 +342,7 @@ class Monitor:
                     time.sleep(0.05)  # câmera ainda não entregou imagem
                     continue
                 n_quadro += 1
+                self._ultimo_quadro = quadro
                 if ritmo:
                     atraso = agora - (time.monotonic() - relogio_inicio)
                     if atraso > 0:
@@ -376,6 +381,19 @@ class Monitor:
             if mostrar_janela:
                 cv2.destroyAllWindows()
             print(f"Encerrado. Infrações registradas nesta sessão: {self.estado['infracoes_sessao']}")
+
+    def tirar_print(self):
+        """Salva agora o quadro atual (original, sem caixas) na pasta de fotos de treino."""
+        quadro = self._ultimo_quadro
+        if quadro is None or not self.estado["online"]:
+            return None
+        with self._trava:
+            deteccoes = list(self._deteccoes)
+        with self._trava_coleta:
+            arquivo = self.coletor.salvar_manual(quadro, deteccoes)
+            if arquivo:
+                self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
+        return arquivo
 
     def aguardar_jpeg(self, anterior, timeout=2.0):
         """Espera um quadro diferente de `anterior` (usado pelo stream MJPEG)."""

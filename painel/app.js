@@ -55,12 +55,27 @@ function cartaoCamera(c) {
     <div class="cam-info">
       <div class="meter" title="Últimas análises: verde = todos com EPI, vermelho = alguém sem EPI"></div>
       <div class="cam-meta"><span class="meta"></span><span class="lat"></span></div>
+      <div><button class="icon-btn btn-print" title="Salva a imagem atual (sem caixas) na pasta de fotos de treino">📸 Tirar print</button></div>
       <div class="err" hidden></div>
     </div>`;
   const img = card.querySelector('img');
   const conectar = () => (img.src = `/video/${c.id}.mjpg?t=${Date.now()}`);
   img.addEventListener('error', () => setTimeout(conectar, 3000));
   conectar();
+  card.querySelector('.btn-print').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const r = await fetch(`/api/cameras/${c.id}/print`, { method: 'POST' });
+      const d = await r.json();
+      toast(r.ok ? `Print salvo: ${d.arquivo}` : `Não salvou: ${d.erro}`, 3500);
+      if (r.ok) flash();
+    } catch {
+      toast('Não salvou: monitor desligado', 3500);
+    } finally {
+      setTimeout(() => (btn.disabled = false), 800);
+    }
+  });
   return card;
 }
 

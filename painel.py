@@ -61,6 +61,22 @@ class Painel(BaseHTTPRequestHandler):
             con.close()
 
     # ----- rotas
+    def do_POST(self):
+        # só aceita pedidos da própria tela (um site qualquer aberto no navegador não pode disparar)
+        origem = self.headers.get("Origin", "")
+        if origem and urlparse(origem).netloc != self.headers.get("Host", ""):
+            return self._json({"erro": "origem não permitida"}, 403)
+        partes = urlparse(self.path).path.strip("/").split("/")  # api/cameras/<n>/print
+        if len(partes) == 4 and partes[:2] == ["api", "cameras"] and partes[3] == "print":
+            n = partes[2]
+            if not n.isdigit() or int(n) >= len(self.monitores):
+                return self._json({"erro": "câmera não encontrada"}, 404)
+            arquivo = self.monitores[int(n)].tirar_print()
+            if arquivo is None:
+                return self._json({"erro": "câmera sem imagem agora"}, 409)
+            return self._json({"arquivo": arquivo.name, "pasta": str(arquivo.parent)})
+        return self._json({"erro": "não encontrado"}, 404)
+
     def do_GET(self):
         url = urlparse(self.path)
         rota = url.path
