@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from monitor import PASTA, Monitor, carregar_config, criar_detector, fonte_real
+from monitor import PASTA, Monitor, carregar_config, criar_detector
 
 ESTATICOS = PASTA / "painel"
 LIMITE_LISTA = 200
@@ -150,8 +150,6 @@ def main():
     if args.fonte:  # teste com vídeos: --fonte define quantas câmeras e de onde vêm
         cameras = [{"id": i, "nome": cameras[i]["nome"] if i < len(cameras) else f"Câmera {i + 1}", "fonte": f}
                    for i, f in enumerate(args.fonte)]
-    for cam in cameras:
-        fonte_real(cam["fonte"])  # falta usuário/senha da câmera? avisa já, antes de subir a tela
 
     # um detector por câmera: cada uma tem o seu rastreamento (números #) independente
     monitores = []

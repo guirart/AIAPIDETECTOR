@@ -17,9 +17,9 @@ cameras:
     fonte: 0
     ativa: true
 
-  - nome: "Tapo 1"
-    fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.100:554/stream1"
-    ativa: false   # troque o IP e mude para true
+  - nome: "ALMOXARIFADO"
+    fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.160:554/stream1"
+    ativa: true
 
   - nome: "Tapo 2"
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.101:554/stream1"

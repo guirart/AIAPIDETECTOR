@@ -81,7 +81,7 @@ function renderCamera(c) {
   card.querySelector('.lat').innerHTML = c.ultima_analise_s != null ? `Análise <b>${c.ultima_analise_s.toFixed(1).replace('.', ',')} s</b>` : '';
   const err = card.querySelector('.err');
   err.hidden = !c.erro;
-  err.textContent = c.erro ? `Erro na detecção: ${c.erro}` : '';
+  err.textContent = c.erro ? (c.online ? `Erro na detecção: ${c.erro}` : c.erro) : '';
 }
 
 // ---------- Situação geral (todas as câmeras) ----------

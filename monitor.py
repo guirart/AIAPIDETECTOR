@@ -263,7 +263,14 @@ class Monitor:
 
     # ----- loop principal
     def executar(self, mostrar_janela=False, publicar_jpeg=False):
-        fonte_video, ao_vivo = abrir_fonte(fonte_real(self.fonte))
+        try:
+            fonte = fonte_real(self.fonte)
+        except SystemExit as e:  # falta usuário/senha desta câmera: avisa na tela, as outras seguem
+            self.estado["erro"] = str(e).splitlines()[0]
+            print(f"[{self.camera}] {self.estado['erro']}", flush=True)
+            return
+        self.estado["erro"] = "Conectando à câmera…"
+        fonte_video, ao_vivo = abrir_fonte(fonte)
         registro = Registro(self.cfg["registro"]["pasta"], self.cfg["registro"]["banco"])
         alertas = Alertas(som=self.cfg["alertas"]["som"])
         controle = ControleTemporal(self.regras["tempo_minimo_s"], self.regras["intervalo_repeticao_s"])
@@ -285,6 +292,8 @@ class Monitor:
                     if not ao_vivo:
                         print("Fim do vídeo.")
                         break
+                    self.estado["erro"] = ("Sem conexão com a câmera: confira se o PC está na mesma rede, "
+                                           "o IP e o usuário/senha da câmera")
                     time.sleep(0.05)  # câmera ainda não entregou imagem
                     continue
                 n_quadro += 1

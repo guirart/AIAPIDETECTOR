@@ -29,8 +29,7 @@ def expandir(texto):
     def trocar(m):
         valor = ler_variavel(m.group(1))
         if not valor:
-            raise SystemExit(f"Falta a variável {m.group(1)}. No PowerShell rode:\n"
-                             f'    setx {m.group(1)} "valor"\n')
+            raise SystemExit(f'Falta a variável {m.group(1)}. No PowerShell rode: setx {m.group(1)} "valor"')
         # usuário/senha dentro de URL: caracteres especiais precisam ser codificados
         from urllib.parse import quote
         return quote(valor, safe="") if texto.startswith("rtsp://") else valor
