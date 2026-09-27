@@ -152,6 +152,17 @@ Coloque o link RTSP na `fonte` da câmera. Formatos comuns:
 
 Teste o link antes no VLC (Mídia → Abrir fluxo de rede). Se a câmera cair, o monitor tenta reconectar sozinho.
 
+## Coleta de fotos para o modelo próprio
+
+Com `coleta.ativa: true` no `config.yaml`, enquanto o monitor roda ele salva fotos **originais**
+(sem caixas, já com o `recorte` da câmera) em `dataset/fotos_novas/AAAA-MM-DD/`:
+- com alguém na imagem: até 1 foto a cada `intervalo_s` (padrão 10 s) por câmera — nome termina em `_pessoa`;
+- sem ninguém: 1 a cada `sem_pessoa_a_cada_s` (padrão 10 min) — `_vazia` (ensina que latas não são gente);
+- no máximo `limite_por_dia` fotos por câmera. A tela mostra "Fotos p/ treino hoje".
+
+Revise a pasta antes de marcar as fotos: apague as que não são da câmera (ex.: espelhamento caiu).
+A pasta `dataset/` **não vai para o GitHub** (fotos de funcionários).
+
 ## Como a decisão é feita
 
 - Capacete conta só se estiver na **parte de cima** da pessoa (capacete na mão não vale).
