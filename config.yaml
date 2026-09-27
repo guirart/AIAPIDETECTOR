@@ -21,6 +21,11 @@ cameras:
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.160:554/stream1"
     ativa: true
 
+  # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
+  - nome: "ALMOXARIFADO (celular)"
+    fonte: "janela:LonelyScreen"
+    ativa: false
+
   - nome: "Tapo 2"
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.101:554/stream1"
     ativa: false

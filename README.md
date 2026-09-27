@@ -18,6 +18,7 @@ Câmera (webcam / RTSP / vídeo) → YOLO (detecção) → Regras (tempo mínimo
 | `regras.py` | Lógica de "essa pessoa está sem EPI?" |
 | `registro.py` | Salva infrações (SQLite) e fotos em `registros/AAAA-MM-DD/` |
 | `alertas.py` | Bipe + mensagem no console |
+| `captura_tela.py` | Usa uma janela/região da tela como câmera (ex.: celular espelhado) |
 | `segredos.py` | Lê senhas/chaves das variáveis do Windows (nunca de arquivo) |
 | `relatorio.py` | Gera `registros/relatorio.html` com totais, gráfico por hora e fotos |
 | `detector_roboflow.py` | Detecção pelo workflow do Roboflow + rastreamento local |
@@ -126,6 +127,21 @@ na **mesma rede** (mesmo roteador/Wi-Fi) que as câmeras.
 Observações: modelos Tapo **a bateria** (ex.: C400, C420, D230) geralmente **não têm RTSP**.
 Algumas câmeras aceitam no máximo 2 conexões RTSP ao mesmo tempo (VLC + monitor contam como 2).
 Com o Roboflow, **cada câmera** gasta créditos separadamente — com várias câmeras, prefira o modelo local.
+
+### Testar pelo celular (sem estar na rede da câmera)
+
+Se o vídeo da câmera abre no app Tapo do celular, dá para **espelhar a tela do celular no PC** e o
+programa analisa essa janela (fonte `janela:<parte do título da janela>`). Serve só para teste:
+a imagem passa pelo celular, perde qualidade e para se o celular bloquear a tela.
+
+1. iPhone: instale no PC um receptor AirPlay (ex.: **LonelyScreen**). Android: use o app **Conectar**
+   do Windows ("Projetar neste computador") ou o **scrcpy**.
+2. Celular e PC no **mesmo Wi-Fi**. No iPhone: Central de Controle → **Espelhar Tela** → escolha o PC.
+3. No app Tapo, abra a câmera **em tela cheia, deitado** (paisagem), e desative o bloqueio automático da tela.
+4. No `config.yaml`, ative a câmera `fonte: "janela:LonelyScreen"` (troque pelo título da janela do
+   seu receptor, se for outro). As faixas pretas em volta são cortadas automaticamente.
+
+Outras fontes de tela: `"tela"` (tela inteira) e `"tela:x,y,largura,altura"` (uma região).
 
 ### Outras câmeras IP
 

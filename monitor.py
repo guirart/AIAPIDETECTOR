@@ -91,6 +91,9 @@ def abrir_fonte(fonte):
         return FonteAoVivo(int(fonte)), True
     if str(fonte).lower().startswith(("rtsp://", "http://", "https://")):
         return FonteAoVivo(str(fonte)), True
+    if str(fonte).lower().startswith(("janela:", "tela")):  # tela do PC (ex.: celular espelhado)
+        from captura_tela import FonteTela
+        return FonteTela(str(fonte)), True
     return FonteArquivo(str(fonte)), False
 
 
@@ -292,8 +295,9 @@ class Monitor:
                     if not ao_vivo:
                         print("Fim do vídeo.")
                         break
-                    self.estado["erro"] = ("Sem conexão com a câmera: confira se o PC está na mesma rede, "
-                                           "o IP e o usuário/senha da câmera")
+                    self.estado["erro"] = getattr(fonte_video, "erro", None) or (
+                        "Sem conexão com a câmera: confira se o PC está na mesma rede, "
+                        "o IP e o usuário/senha da câmera")
                     time.sleep(0.05)  # câmera ainda não entregou imagem
                     continue
                 n_quadro += 1
