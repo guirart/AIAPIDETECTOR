@@ -69,6 +69,8 @@ class DetectorRoboflow:
                              class_id=np.arange(len(itens)),  # índice para recuperar o item original
                              data={"tipo": np.array([self.mapa[p["class"].lower()] for p in itens])})
         dets = self.rastreador.update_with_detections(dets)
+        if len(dets) == 0 or "tipo" not in dets.data:  # rastreador ainda não confirmou ninguém
+            return []
         return [Deteccao(str(tipo), tuple(float(v) for v in caixa), float(conf), int(tid))
                 for caixa, conf, tid, tipo in zip(dets.xyxy, dets.confidence, dets.tracker_id, dets.data["tipo"])]
 

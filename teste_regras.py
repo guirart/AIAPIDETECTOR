@@ -39,6 +39,28 @@ def test_negativo_sem_pessoa_vira_infracao():
     assert len(s) == 1 and s[0].faltando == ["colete"] and s[0].track_id == 5
 
 
+def test_exigir_pessoa_ignora_sem_epi_solto():
+    # Alarme falso real: "sem colete" nos botões do app Tapo, sem ninguém na imagem
+    botoes = Deteccao("sem_colete", (1340, 400, 1452, 750), 0.5, 1)
+    assert avaliar_quadro([botoes], OBRIG, exigir_pessoa=True) == []
+    # mas o "sem EPI" em cima de uma pessoa continua valendo
+    sem = Deteccao("sem_capacete", (130, 95, 170, 130), 0.7)
+    assert avaliar_quadro([PESSOA, COLETE, sem], OBRIG, exigir_pessoa=True)[0].faltando == ["capacete"]
+
+
+def test_exigir_evidencia_ignora_objeto_confundido_com_pessoa():
+    # Alarme falso real: latas de tinta viraram "Person" (74%), sem capacete/colete e sem NO-Hardhat
+    latas = Deteccao("pessoa", (218, 407, 287, 568), 0.74, 1)
+    assert avaliar_quadro([latas], OBRIG, exigir_evidencia=True)[0].faltando == []
+    assert avaliar_quadro([latas], OBRIG, exigir_evidencia=False)[0].faltando == ["capacete", "colete"]
+
+
+def test_exigir_evidencia_pega_quem_o_modelo_viu_sem_epi():
+    sem_capacete = Deteccao("sem_capacete", (130, 95, 170, 130), 0.8)
+    s = avaliar_quadro([PESSOA, sem_capacete], OBRIG, exigir_evidencia=True)
+    assert s[0].faltando == ["capacete"]
+
+
 def test_epi_nao_obrigatorio_ignorado():
     assert avaliar_quadro([PESSOA, CAPACETE], ["capacete"])[0].faltando == []
 

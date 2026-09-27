@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 import cv2
+import numpy as np
 import yaml
 
 from alertas import Alertas
@@ -84,6 +85,31 @@ class FonteArquivo:
 
     def fechar(self):
         self._cap.release()
+
+
+class FonteRecortada:
+    """Corta uma parte fixa da imagem (ex.: botões do app no celular espelhado).
+
+    recorte = [esquerda, topo, direita, base] em fração da imagem (0 a 1). [0, 0, 0.92, 1] tira os 8% da direita.
+    """
+
+    def __init__(self, fonte, recorte):
+        self.fonte, self.recorte = fonte, recorte
+        self._entrada = self._saida = None
+
+    def __getattr__(self, nome):  # online, erro, fechar... vêm da fonte original
+        return getattr(self.fonte, nome)
+
+    def ler(self):
+        quadro, agora = self.fonte.ler()
+        if quadro is None:
+            return None, agora
+        if quadro is not self._entrada:  # mesmo quadro -> mesmo objeto (a análise usa isso)
+            h, w = quadro.shape[:2]
+            e, t, d, b = self.recorte
+            self._entrada = quadro
+            self._saida = np.ascontiguousarray(quadro[int(t * h):int(b * h), int(e * w):int(d * w)])
+        return self._saida, agora
 
 
 def abrir_fonte(fonte):
@@ -164,8 +190,10 @@ def carregar_config(caminho):
     with open(caminho, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     cameras = cfg.get("cameras") or [cfg["camera"]]  # aceita o formato antigo (uma câmera)
-    cfg["cameras"] = [{"id": i, "nome": c.get("nome") or f"Câmera {i + 1}", "fonte": c["fonte"]}
-                      for i, c in enumerate(cameras) if c.get("ativa", True)]
+    ativas = [c for c in cameras if c.get("ativa", True)]
+    cfg["cameras"] = [{"id": i, "nome": c.get("nome") or f"Câmera {i + 1}", "fonte": c["fonte"],
+                       "recorte": c.get("recorte")}
+                      for i, c in enumerate(ativas)]
     if not cfg["cameras"]:
         sys.exit("Nenhuma câmera ativa no config.yaml.")
     return cfg
@@ -204,8 +232,8 @@ class Monitor:
     DURACAO_ALERTA_S = 8
     HISTORICO = 35  # quantas análises recentes a tela mostra na barrinha da câmera
 
-    def __init__(self, cfg, fonte, detectar_quadro, descricao_motor, nome="Câmera 1", id_camera=0):
-        self.cfg, self.fonte = cfg, fonte
+    def __init__(self, cfg, fonte, detectar_quadro, descricao_motor, nome="Câmera 1", id_camera=0, recorte=None):
+        self.cfg, self.fonte, self.recorte = cfg, fonte, recorte
         self.detectar_quadro = detectar_quadro
         self.camera, self.id_camera = nome, id_camera
         self.regras = cfg["regras"]
@@ -232,7 +260,9 @@ class Monitor:
             erro, deteccoes = str(e), self._deteccoes
             print(f"[ERRO na detecção] {e}", flush=True)
         situacoes = avaliar_quadro(deteccoes, self.regras["epis_obrigatorios"],
-                                   self.regras["altura_minima_pessoa_px"])
+                                   self.regras["altura_minima_pessoa_px"],
+                                   self.regras.get("exigir_pessoa", True),
+                                   self.regras.get("exigir_evidencia", False))
         with self._trava:
             self._deteccoes, self._situacoes = deteccoes, situacoes
         for s in controle.atualizar(situacoes, agora):
@@ -274,6 +304,8 @@ class Monitor:
             return
         self.estado["erro"] = "Conectando à câmera…"
         fonte_video, ao_vivo = abrir_fonte(fonte)
+        if self.recorte:
+            fonte_video = FonteRecortada(fonte_video, self.recorte)
         registro = Registro(self.cfg["registro"]["pasta"], self.cfg["registro"]["banco"])
         alertas = Alertas(som=self.cfg["alertas"]["som"])
         controle = ControleTemporal(self.regras["tempo_minimo_s"], self.regras["intervalo_repeticao_s"])
@@ -362,7 +394,7 @@ def main():
     fonte = args.fonte if args.fonte is not None else cam["fonte"]
     detectar_quadro, motor = criar_detector(cfg, args.modelo)
     print(f"Detecção: {motor}. Pressione Q na janela para sair.")
-    monitor = Monitor(cfg, fonte, detectar_quadro, motor, cam["nome"], cam["id"])
+    monitor = Monitor(cfg, fonte, detectar_quadro, motor, cam["nome"], cam["id"], cam.get("recorte"))
     try:
         monitor.executar(mostrar_janela=cfg["alertas"]["mostrar_janela"] and not args.sem_janela)
     except KeyboardInterrupt:

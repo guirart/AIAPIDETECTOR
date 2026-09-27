@@ -56,15 +56,22 @@ def sobreposicao(a, b):
 SOBREPOSICAO_MINIMA = 0.5
 
 
-def avaliar_quadro(deteccoes, epis_obrigatorios, altura_minima_px=0):
-    """Retorna a Situacao de cada pessoa visível no quadro."""
+def avaliar_quadro(deteccoes, epis_obrigatorios, altura_minima_px=0, exigir_pessoa=False,
+                   exigir_evidencia=False):
+    """Retorna a Situacao de cada pessoa visível no quadro.
+
+    exigir_pessoa=True: "sem EPI" longe de qualquer pessoa é ignorado (evita alarme falso em objetos,
+    placas, telas). Use False só com modelos que não têm a classe "pessoa".
+    exigir_evidencia=True: só falta EPI se o modelo VIU a pessoa sem ele (ex.: NO-Hardhat na cabeça).
+    Não achar o capacete deixa de bastar - evita alarme em objetos confundidos com pessoa (latas, tonéis).
+    """
     pessoas = [d for d in deteccoes if d.tipo == "pessoa"
                and (d.caixa[3] - d.caixa[1]) >= altura_minima_px]
     faltando = [[] for _ in pessoas]
 
     # EPI presente: precisa estar na região certa do corpo (capacete na mão não vale)
     for n, p in enumerate(pessoas):
-        for epi in epis_obrigatorios:
+        for epi in ([] if exigir_evidencia else epis_obrigatorios):
             if not any(d.tipo == epi and _dentro_da_regiao(d.caixa, p.caixa, REGIAO_EPI[epi])
                        for d in deteccoes):
                 faltando[n].append(epi)
@@ -86,7 +93,7 @@ def avaliar_quadro(deteccoes, epis_obrigatorios, altura_minima_px=0):
     situacoes = [Situacao(p.track_id, p.caixa, [e for e in epis_obrigatorios if e in f])
                  for p, f in zip(pessoas, faltando)]
     # "Sem EPI" longe de qualquer pessoa (ex.: modelo sem classe pessoa): já é infração por si
-    for d in soltos:
+    for d in ([] if exigir_pessoa else soltos):
         situacoes.append(Situacao(d.track_id, d.caixa, [d.tipo.removeprefix("sem_")]))
     return situacoes
 

@@ -155,7 +155,8 @@ def main():
     monitores = []
     for cam in cameras:
         detectar_quadro, motor = criar_detector(cfg, args.modelo)
-        monitores.append(Monitor(cfg, cam["fonte"], detectar_quadro, motor, cam["nome"], cam["id"]))
+        monitores.append(Monitor(cfg, cam["fonte"], detectar_quadro, motor, cam["nome"], cam["id"],
+                                 cam.get("recorte")))
     Painel.monitores = monitores
     Painel.banco = str(Path(cfg["registro"]["banco"]).resolve())
     servidor = ThreadingHTTPServer((host, porta), Painel)
