@@ -1,0 +1,65 @@
+# ============================================================
+#  Monitor de EPI - configuração
+# ============================================================
+
+camera:
+  nome: "Camera 01 - Galpao"
+  # Fonte do vídeo:
+  #   0                                   -> webcam do PC
+  #   "videos/teste.mp4"                  -> arquivo de vídeo
+  #   "rtsp://usuario:senha@192.168.1.64:554/Streaming/Channels/101"  -> câmera IP
+  fonte: 0
+
+modelo:
+  # Onde a detecção roda:
+  #   "roboflow" -> workflow na nuvem com o modelo público construction-site-safety/27
+  #                 (não precisa treinar; precisa de internet e da chave ROBOFLOW_API_KEY)
+  #   "local"    -> modelo .pt no próprio PC (sem internet; precisa treinar - ver README)
+  motor: "roboflow"
+  roboflow:
+    workflow: "workflows/epi_workflow.json"
+    url: "https://serverless.roboflow.com"
+    largura_envio: 640   # reduz a imagem antes de enviar (mais rápido, menos dados)
+  # Pesos do modelo local (motor: "local")
+  caminho: "modelos/epi.pt"
+  confianca_minima: 0.40
+  tamanho_imagem: 640
+  # Nomes das classes do modelo -> significado para o sistema.
+  # Já vem mapeado para o dataset "Construction Site Safety" e variações comuns.
+  classes:
+    pessoa: ["Person", "person"]
+    capacete: ["Hardhat", "hardhat", "helmet", "Helmet"]
+    colete: ["Safety Vest", "vest", "Vest", "safety-vest"]
+    sem_capacete: ["NO-Hardhat", "no-hardhat", "no_helmet", "head"]
+    sem_colete: ["NO-Safety Vest", "no-vest", "no_vest"]
+
+regras:
+  # EPIs obrigatórios nesta câmera (capacete, colete)
+  epis_obrigatorios: ["capacete", "colete"]
+  # Segundos seguidos sem o EPI até virar infração (evita alarme falso)
+  tempo_minimo_s: 2.0
+  # Depois de registrar, não registra a mesma pessoa de novo por este tempo
+  intervalo_repeticao_s: 60
+  # Ignora pessoas muito pequenas/distantes (altura da caixa em pixels)
+  altura_minima_pessoa_px: 80
+
+desempenho:
+  # Analisa 1 a cada N quadros (CPU sem placa de vídeo: 2 a 4 é bom)
+  processar_a_cada_n_quadros: 3
+  # Câmera ao vivo: intervalo mínimo entre análises. Com o Roboflow, cada análise gasta
+  # 1 crédito (1 s = até 3.600 por hora); aumente para economizar.
+  intervalo_minimo_analise_s: 1.0
+
+alertas:
+  som: true
+  mostrar_janela: true
+
+painel:
+  # 127.0.0.1 = só este PC abre a tela. Use 0.0.0.0 para abrir de outro PC/celular na rede
+  # (a tela não tem senha e mostra fotos de funcionários - só libere em rede confiável).
+  host: "127.0.0.1"
+  porta: 8080
+
+registro:
+  pasta: "registros"
+  banco: "registros/infracoes.db"

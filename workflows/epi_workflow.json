@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "inputs": [
+    { "type": "WorkflowImage", "name": "image" },
+    { "type": "WorkflowParameter", "name": "confianca", "default_value": 0.4 }
+  ],
+  "steps": [
+    {
+      "type": "roboflow_core/roboflow_object_detection_model@v2",
+      "name": "epi",
+      "images": "$inputs.image",
+      "model_id": "construction-site-safety/27",
+      "confidence": "$inputs.confianca",
+      "class_filter": ["Person", "Hardhat", "NO-Hardhat", "Safety Vest", "NO-Safety Vest"]
+    }
+  ],
+  "outputs": [
+    { "type": "JsonField", "name": "predictions", "selector": "$steps.epi.predictions" }
+  ]
+}
