@@ -75,6 +75,54 @@ def test_temporal_zera_quando_coloca_epi():
     assert len(c.atualizar(sem, 4.6)) == 1
 
 
+def test_sem_colete_fora_da_regiao_fica_com_a_pessoa():
+    # Webcam de perto: o modelo marcou "sem colete" na parte de baixo da imagem (abaixo do tronco).
+    # Antes isso virava uma segunda "pessoa" e gerava alerta duplicado.
+    perto = Deteccao("pessoa", (100, 100, 400, 480), 0.9, 1)
+    sem_colete = Deteccao("sem_colete", (150, 400, 350, 480), 0.7, 3)
+    s = avaliar_quadro([perto, sem_colete], OBRIG)
+    assert len(s) == 1 and s[0].track_id == 1 and s[0].faltando == ["capacete", "colete"]
+
+
+def test_sem_epi_de_outra_pessoa_nao_se_mistura():
+    outra = Deteccao("pessoa", (500, 100, 600, 400), 0.9, 2)
+    sem_capacete_da_outra = Deteccao("sem_capacete", (530, 95, 570, 130), 0.8)
+    s = avaliar_quadro([PESSOA, CAPACETE, COLETE, outra, COLETE_DA(outra), sem_capacete_da_outra], OBRIG)
+    assert [x.faltando for x in s] == [[], ["capacete"]]
+
+
+def COLETE_DA(p):
+    x1, y1, x2, y2 = p.caixa
+    return Deteccao("colete", (x1 + 10, y1 + 70, x2 - 10, y1 + 180), 0.8)
+
+
+def test_troca_de_numero_nao_duplica_infracao():
+    c = ControleTemporal(tempo_minimo_s=2, intervalo_repeticao_s=60)
+    s1 = avaliar_quadro([PESSOA], OBRIG)
+    c.atualizar(s1, 0)
+    assert len(c.atualizar(s1, 2.5)) == 1
+    # rastreador perdeu e deu número novo (#9) para a mesma pessoa no mesmo lugar
+    s9 = avaliar_quadro([Deteccao("pessoa", (105, 102, 205, 402), 0.9, 9)], OBRIG)
+    c.atualizar(s9, 4)
+    assert c.atualizar(s9, 6.5) == []
+
+
+def test_outra_pessoa_em_outro_lugar_ainda_registra():
+    c = ControleTemporal(tempo_minimo_s=2, intervalo_repeticao_s=60)
+    duas = avaliar_quadro([PESSOA, Deteccao("pessoa", (500, 100, 600, 400), 0.9, 2)], OBRIG)
+    c.atualizar(duas, 0)
+    assert len(c.atualizar(duas, 2.5)) == 2
+
+
+def test_mesmo_lugar_depois_da_janela_registra_de_novo():
+    c = ControleTemporal(tempo_minimo_s=2, intervalo_repeticao_s=60, janela_duplicata_s=15)
+    c.atualizar(avaliar_quadro([PESSOA], OBRIG), 0)
+    c.atualizar(avaliar_quadro([PESSOA], OBRIG), 2.5)
+    nova = avaliar_quadro([Deteccao("pessoa", PESSOA.caixa, 0.9, 7)], OBRIG)
+    c.atualizar(nova, 30)
+    assert len(c.atualizar(nova, 32.5)) == 1
+
+
 if __name__ == "__main__":
     testes = [f for n, f in dict(globals()).items() if n.startswith("test_")]
     for t in testes:
