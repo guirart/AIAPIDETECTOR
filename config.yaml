@@ -94,8 +94,9 @@ modelo:
     sem_colete: ["NO-Safety Vest", "no-vest", "no_vest"]
 
 regras:
-  # EPIs obrigatórios nesta câmera (capacete, colete)
-  epis_obrigatorios: ["capacete", "colete"]
+  # EPIs obrigatórios. Por decisão da empresa, o sistema cobra SÓ o capacete.
+  # (para voltar a cobrar o colete: ["capacete", "colete"])
+  epis_obrigatorios: ["capacete"]
   # Segundos seguidos sem o EPI até virar infração (evita alarme falso)
   tempo_minimo_s: 2.0
   # Depois de registrar, não registra a mesma pessoa de novo por este tempo (15 min)
