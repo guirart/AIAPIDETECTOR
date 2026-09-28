@@ -145,6 +145,21 @@ a imagem passa pelo celular, perde qualidade e para se o celular bloquear a tela
 
 Outras fontes de tela: `"tela"` (tela inteira) e `"tela:x,y,largura,altura"` (uma região).
 
+### Várias câmeras na grade do app (reconhecidas pela imagem)
+
+Com o app Tapo em **visualização múltipla** no BlueStacks, a seção `grades:` do `config.yaml` lista os
+quadrados da grade e cada câmera usa `fonte: "grade:bluestacks"`. O programa **reconhece cada câmera
+pelo cenário** (foto de referência em `referencias/<nome>.jpg`): se o app reorganizar a grade, cada
+câmera é achada no novo lugar sozinha; se uma câmera sair da grade, ela fica "sem sinal".
+
+- **Câmera nova:** coloque-a na grade e rode `python identificar_cameras.py --referencia "NOME" <quadrado>`
+  (quadrados: 1 em cima à esquerda, 2 em cima à direita, 3 embaixo à esquerda, 4 embaixo à direita).
+- **Ver quem está onde:** `python identificar_cameras.py` (mostra a semelhança de cada câmera com cada quadrado).
+- **Câmera girada (Pan & Tilt):** se só ela ficou irreconhecível e sobrou um só quadrado, é reconhecida
+  por eliminação e o cenário novo vira uma referência extra (`referencias/<nome>__<data>.jpg`).
+- A pasta `referencias/` não vai para o GitHub (mostra o local de trabalho): num PC novo, crie as referências.
+- Se mudar o **tamanho** da janela do BlueStacks, as posições da grade precisam ser medidas de novo.
+
 ### Outras câmeras IP
 
 Coloque o link RTSP na `fonte` da câmera. Formatos comuns:
