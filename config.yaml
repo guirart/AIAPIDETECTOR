@@ -29,17 +29,22 @@ cameras:
   #  tamanho/formato da janela ou a ordem das câmeras na grade, os recortes precisam ser refeitos)
   - nome: "ALMOXARIFADO"
     fonte: "janela:BlueStacks App Player"
-    recorte: [0.4307, 0.2057, 0.7027, 0.5143]   # grade: em cima, à direita
+    recorte: [0.1546, 0.2057, 0.4250, 0.5143]   # grade: em cima, à esquerda
     ativa: true
 
   - nome: "CÂMERA 2 - INTERNA"
     fonte: "janela:BlueStacks App Player"
-    recorte: [0.1546, 0.2057, 0.4250, 0.5143]   # grade: em cima, à esquerda
+    recorte: [0.1546, 0.5249, 0.4250, 0.8335]   # grade: embaixo, à esquerda
     ativa: true
 
   - nome: "CÂMERA 3 - FACHADA"
     fonte: "janela:BlueStacks App Player"
-    recorte: [0.1546, 0.5249, 0.4250, 0.8335]   # grade: embaixo, à esquerda
+    recorte: [0.4307, 0.5249, 0.7027, 0.8335]   # grade: embaixo, à direita
+    ativa: true
+
+  - nome: "CÂMERA 4 - CORREDOR"
+    fonte: "janela:BlueStacks App Player"
+    recorte: [0.4307, 0.2057, 0.7027, 0.5143]   # grade: em cima, à direita
     ativa: true
 
   # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
