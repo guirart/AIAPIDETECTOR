@@ -62,6 +62,16 @@ def test_confirmar_pela_cabeca_pega_pessoa_sem_capacete_e_sem_colete():
     assert s[0].faltando == ["capacete", "colete"]
 
 
+def test_confirmar_pessoa_de_lado_sem_capacete_detectado():
+    # Caso real (28/09): pessoa de cinza de lado, capacete amarelo NÃO detectado, mas "sem colete" 0.88.
+    # Antes era descartada (sem cabeça vista); o "sem colete" em cima dela já confirma que é gente.
+    cinza = Deteccao("pessoa", (883, 356, 1010, 602), 0.76, 2)
+    sem_colete = Deteccao("sem_colete", (909, 420, 981, 560), 0.88)
+    s = avaliar_quadro([cinza, sem_colete], OBRIG, confirmar_pela_cabeca=True)
+    # ele ESTÁ de capacete (amarelo) que o modelo não viu: não pode ser acusado de "sem capacete"
+    assert len(s) == 1 and s[0].track_id == 2 and s[0].faltando == ["colete"]
+
+
 def test_confirmar_pela_cabeca_pessoa_com_capacete_sem_colete():
     s = avaliar_quadro([PESSOA, CAPACETE], OBRIG, confirmar_pela_cabeca=True)
     assert s[0].faltando == ["colete"]

@@ -51,7 +51,9 @@ modelo:
   roboflow:
     workflow: "workflows/epi_workflow.json"
     url: "https://serverless.roboflow.com"
-    largura_envio: 640   # reduz a imagem antes de enviar (mais rápido, menos dados)
+    # reduz a imagem antes de enviar. 640 = mais rápido; 1280 = mais preciso (no almoxarifado,
+    # com 640 o modelo confundia latas com pessoa; com a resolução cheia, não)
+    largura_envio: 1280
   # Pesos do modelo local (motor: "local")
   caminho: "modelos/epi.pt"
   confianca_minima: 0.40
@@ -77,10 +79,12 @@ regras:
   # "Sem EPI" detectado sem nenhuma pessoa por perto é ignorado (evita alarme falso em
   # objetos e telas). Deixe false só se o modelo não tiver a classe "pessoa".
   exigir_pessoa: true
-  # true  = só conta como pessoa se o modelo também viu a CABEÇA dela (com ou sem capacete).
-  #         Evita alarme em objetos confundidos com pessoa (latas, tonéis, sacos). Pode deixar
-  #         passar alguém muito longe, em que a cabeça fica pequena demais para o modelo.
-  # false = qualquer "pessoa" detectada vale (pega mais, erra mais).
+  # true  = modo cauteloso:
+  #         - só conta como pessoa se o modelo também viu algo que só gente tem: a cabeça (com ou
+  #           sem capacete) ou um "sem EPI" em cima dela. Evita alarme em latas, tonéis, sacos.
+  #         - "sem capacete" só se o modelo VIU a cabeça sem capacete (de lado/na borda ele às vezes
+  #           não enxerga o capacete - isso não pode virar acusação).
+  # false = qualquer "pessoa" detectada vale e EPI não encontrado = falta (pega mais, erra mais).
   confirmar_pela_cabeca: true
 
 desempenho:

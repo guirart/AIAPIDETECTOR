@@ -56,11 +56,12 @@ def sobreposicao(a, b):
 SOBREPOSICAO_MINIMA = 0.5
 
 
-def _tem_cabeca(p, deteccoes):
-    """O modelo viu uma cabeça (com ou sem capacete) no alto desta pessoa?"""
+def _pessoa_confirmada(p, deteccoes):
+    """Além de "pessoa", o modelo viu algo que só gente tem: a cabeça (com ou sem capacete) no alto
+    dela, ou um "sem EPI" em cima dela (ex.: "sem colete" no tronco - lata não veste roupa)."""
     return any(
         (d.tipo == "capacete" and _dentro_da_regiao(d.caixa, p.caixa, REGIAO_EPI["capacete"]))
-        or (d.tipo == "sem_capacete" and sobreposicao(d.caixa, p.caixa) >= SOBREPOSICAO_MINIMA)
+        or (d.tipo.startswith("sem_") and sobreposicao(d.caixa, p.caixa) >= SOBREPOSICAO_MINIMA)
         for d in deteccoes)
 
 
@@ -75,12 +76,15 @@ def avaliar_quadro(deteccoes, epis_obrigatorios, altura_minima_px=0, exigir_pess
     """
     pessoas = [d for d in deteccoes if d.tipo == "pessoa"
                and (d.caixa[3] - d.caixa[1]) >= altura_minima_px
-               and (not confirmar_pela_cabeca or _tem_cabeca(d, deteccoes))]
+               and (not confirmar_pela_cabeca or _pessoa_confirmada(d, deteccoes))]
     faltando = [[] for _ in pessoas]
 
-    # EPI presente: precisa estar na região certa do corpo (capacete na mão não vale)
+    # EPI presente: precisa estar na região certa do corpo (capacete na mão não vale).
+    # Modo cauteloso: capacete só falta se o modelo VIU a cabeça sem ele ("sem_capacete", abaixo);
+    # não achar o capacete não basta - de lado ou na borda da imagem o modelo costuma não ver o capacete.
+    por_ausencia = [e for e in epis_obrigatorios if not (confirmar_pela_cabeca and e == "capacete")]
     for n, p in enumerate(pessoas):
-        for epi in epis_obrigatorios:
+        for epi in por_ausencia:
             if not any(d.tipo == epi and _dentro_da_regiao(d.caixa, p.caixa, REGIAO_EPI[epi])
                        for d in deteccoes):
                 faltando[n].append(epi)
