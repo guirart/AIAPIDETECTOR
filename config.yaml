@@ -26,7 +26,9 @@ cameras:
   - nome: "ALMOXARIFADO"
     fonte: "janela:BlueStacks App Player"
     # só a área do vídeo, sem a barra de cima e os botões da direita: [esquerda, topo, direita, base]
-    recorte: [0, 0.168, 0.668, 0.833]
+    # (medido com o BlueStacks em janela, com a coluna de anúncios à esquerda; se mudar o
+    #  tamanho/formato da janela, o recorte precisa ser refeito)
+    recorte: [0.152, 0.201, 0.705, 0.839]
     ativa: true
 
   # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
