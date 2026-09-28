@@ -272,7 +272,7 @@ class Monitor:
             self._deteccoes, self._situacoes = deteccoes, situacoes
         if erro is None:
             with self._trava_coleta:
-                if self.coletor.talvez_salvar(quadro, deteccoes, agora):
+                if self.coletor.talvez_salvar(quadro, [s.caixa for s in situacoes], agora):
                     self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
         for s in controle.atualizar(situacoes, agora):
             self.estado["infracoes_sessao"] += 1
@@ -388,9 +388,9 @@ class Monitor:
         if quadro is None or not self.estado["online"]:
             return None
         with self._trava:
-            deteccoes = list(self._deteccoes)
+            pessoas = [s.caixa for s in self._situacoes]  # só as confirmadas (sem latas/tonéis)
         with self._trava_coleta:
-            arquivo = self.coletor.salvar_manual(quadro, deteccoes)
+            arquivo = self.coletor.salvar_manual(quadro, pessoas)
             if arquivo:
                 self.estado["fotos_coletadas_hoje"] = self.coletor.hoje
         return arquivo

@@ -17,7 +17,6 @@ from pathlib import Path
 
 import cv2
 
-TIPOS_PESSOA = {"pessoa", "sem_capacete", "sem_colete"}
 MARGEM_RECORTE = 0.15  # folga em volta da pessoa no recorte
 
 
@@ -72,7 +71,7 @@ class Coletor:
             self.hoje = len(list(pasta.glob(f"{self.camera}_*.jpg")))
         return pasta
 
-    def _salvar(self, quadro, deteccoes, tipo):
+    def _salvar(self, quadro, pessoas, tipo):
         pasta = self._pasta_do_dia()
         base = f"{self.camera}_{datetime.now().strftime('%H%M%S_%f')[:-3]}"
         arquivo = pasta / f"{base}_{tipo}.jpg"
@@ -80,32 +79,33 @@ class Coletor:
             return None
         self.hoje += 1
         if self.recortar_pessoas:
-            self._salvar_recortes(pasta, base, quadro, deteccoes)
+            self._salvar_recortes(pasta, base, quadro, pessoas)
         return arquivo
 
-    def _salvar_recortes(self, pasta, base, quadro, deteccoes):
+    def _salvar_recortes(self, pasta, base, quadro, pessoas):
         h, w = quadro.shape[:2]
-        pessoas = [d for d in deteccoes if d.tipo == "pessoa"]
         if not pessoas:
             return
         destino = pasta / "pessoas"
         destino.mkdir(exist_ok=True)
-        for n, d in enumerate(pessoas, 1):
-            x1, y1, x2, y2 = d.caixa
+        for n, caixa in enumerate(pessoas, 1):
+            x1, y1, x2, y2 = caixa
             mx, my = (x2 - x1) * MARGEM_RECORTE, (y2 - y1) * MARGEM_RECORTE
             x1, y1 = max(0, int(x1 - mx)), max(0, int(y1 - my))
             x2, y2 = min(w, int(x2 + mx)), min(h, int(y2 + my))
             if x2 - x1 >= 20 and y2 - y1 >= 20:
                 _gravar(destino / f"{base}_pessoa{n}.jpg", quadro[y1:y2, x1:x2])
 
-    def talvez_salvar(self, quadro, deteccoes, agora):
-        """Chamado a cada análise. `agora` = relógio do monitor (segundos). Devolve o arquivo salvo ou None."""
+    def talvez_salvar(self, quadro, pessoas, agora):
+        """Chamado a cada análise. `pessoas` = caixas das pessoas CONFIRMADAS pelas regras (o mesmo
+        filtro dos alertas: latas/tonéis confundidos com pessoa ficam de fora).
+        `agora` = relógio do monitor (segundos). Devolve o arquivo salvo ou None."""
         if not self.ativa or quadro is None:
             return None
         self._pasta_do_dia()
         if self.hoje >= self.limite_dia:
             return None
-        com_pessoa = any(d.tipo in TIPOS_PESSOA for d in deteccoes)
+        com_pessoa = bool(pessoas)
         if com_pessoa:
             if self._ultima_com is not None and agora - self._ultima_com < self.intervalo_s:
                 return None
@@ -114,10 +114,10 @@ class Coletor:
             if self._ultima_sem is not None and agora - self._ultima_sem < self.vazia_a_cada_s:
                 return None
             self._ultima_sem = agora
-        return self._salvar(quadro, deteccoes, "pessoa" if com_pessoa else "vazia")
+        return self._salvar(quadro, pessoas, "pessoa" if com_pessoa else "vazia")
 
-    def salvar_manual(self, quadro, deteccoes=()):
+    def salvar_manual(self, quadro, pessoas=()):
         """Botão "Tirar print" da tela: salva agora, mesmo com a coleta automática desligada."""
         if quadro is None:
             return None
-        return self._salvar(quadro, list(deteccoes), "manual")
+        return self._salvar(quadro, list(pessoas), "manual")
