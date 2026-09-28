@@ -23,12 +23,23 @@ cameras:
 
   # App Tapo rodando no BlueStacks (emulador Android) neste PC: pega a câmera pela nuvem da Tapo,
   # de qualquer rede. Abra a câmera no app e deixe a janela do BlueStacks aberta (sem minimizar).
+  # As 3 câmeras abaixo vêm da MESMA janela: o app Tapo na visualização em grade (2x2).
+  # Cada recorte pega um quadrado da grade: [esquerda, topo, direita, base] em fração da janela.
+  # (medido com o BlueStacks em janela, com a coluna de anúncios à esquerda; se mudar o
+  #  tamanho/formato da janela ou a ordem das câmeras na grade, os recortes precisam ser refeitos)
   - nome: "ALMOXARIFADO"
     fonte: "janela:BlueStacks App Player"
-    # só a área do vídeo, sem a barra de cima e os botões da direita: [esquerda, topo, direita, base]
-    # (medido com o BlueStacks em janela, com a coluna de anúncios à esquerda; se mudar o
-    #  tamanho/formato da janela, o recorte precisa ser refeito)
-    recorte: [0.152, 0.201, 0.705, 0.839]
+    recorte: [0.4307, 0.2057, 0.7027, 0.5143]   # grade: em cima, à direita
+    ativa: true
+
+  - nome: "CÂMERA 2 - INTERNA"
+    fonte: "janela:BlueStacks App Player"
+    recorte: [0.1546, 0.2057, 0.4250, 0.5143]   # grade: em cima, à esquerda
+    ativa: true
+
+  - nome: "CÂMERA 3 - FACHADA"
+    fonte: "janela:BlueStacks App Player"
+    recorte: [0.1546, 0.5249, 0.4250, 0.8335]   # grade: embaixo, à esquerda
     ativa: true
 
   # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
