@@ -315,7 +315,11 @@ class Monitor:
             print(f"[{self.camera}] {self.estado['erro']}", flush=True)
             return
         self.estado["erro"] = "Conectando à câmera…"
-        fonte_video, ao_vivo = abrir_fonte(fonte)
+        if str(fonte).startswith("grade:"):  # câmera dentro de uma grade: reconhecida pela imagem
+            from identificar_cameras import fonte_da_grade
+            fonte_video, ao_vivo = fonte_da_grade(self.cfg, fonte, self.camera), True
+        else:
+            fonte_video, ao_vivo = abrir_fonte(fonte)
         if self.recorte:
             fonte_video = FonteRecortada(fonte_video, self.recorte)
         registro = Registro(self.cfg["registro"]["pasta"], self.cfg["registro"]["banco"])

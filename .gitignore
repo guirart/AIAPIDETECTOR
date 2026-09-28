@@ -6,6 +6,7 @@ __pycache__/
 # Dados de funcionários: fotos e banco de infrações NUNCA vão para o GitHub
 registros/
 dataset/
+referencias/
 
 # Modelos e treinos (arquivos grandes)
 *.pt

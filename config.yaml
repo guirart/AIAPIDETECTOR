@@ -23,28 +23,24 @@ cameras:
 
   # App Tapo rodando no BlueStacks (emulador Android) neste PC: pega a câmera pela nuvem da Tapo,
   # de qualquer rede. Abra a câmera no app e deixe a janela do BlueStacks aberta (sem minimizar).
-  # As 3 câmeras abaixo vêm da MESMA janela: o app Tapo na visualização em grade (2x2).
-  # Cada recorte pega um quadrado da grade: [esquerda, topo, direita, base] em fração da janela.
-  # (medido com o BlueStacks em janela, com a coluna de anúncios à esquerda; se mudar o
-  #  tamanho/formato da janela ou a ordem das câmeras na grade, os recortes precisam ser refeitos)
+  # As 4 câmeras abaixo vêm da grade do app Tapo (seção "grades", mais abaixo). O programa
+  # RECONHECE cada uma pela imagem (foto de referência em referencias/<nome>.jpg): se o app
+  # reorganizar a grade, cada câmera é achada no novo quadrado sozinha.
+  # Câmera nova na grade: python identificar_cameras.py --referencia "NOME" <quadrado 1-4>
   - nome: "ALMOXARIFADO"
-    fonte: "janela:BlueStacks App Player"
-    recorte: [0.1546, 0.2057, 0.4250, 0.5143]   # grade: em cima, à esquerda
+    fonte: "grade:bluestacks"
     ativa: true
 
   - nome: "CÂMERA 2 - INTERNA"
-    fonte: "janela:BlueStacks App Player"
-    recorte: [0.1546, 0.5249, 0.4250, 0.8335]   # grade: embaixo, à esquerda
+    fonte: "grade:bluestacks"
     ativa: true
 
   - nome: "CÂMERA 3 - FACHADA"
-    fonte: "janela:BlueStacks App Player"
-    recorte: [0.4307, 0.5249, 0.7027, 0.8335]   # grade: embaixo, à direita
+    fonte: "grade:bluestacks"
     ativa: true
 
   - nome: "CÂMERA 4 - CORREDOR"
-    fonte: "janela:BlueStacks App Player"
-    recorte: [0.4307, 0.2057, 0.7027, 0.5143]   # grade: em cima, à direita
+    fonte: "grade:bluestacks"
     ativa: true
 
   # TESTE: vídeo da Tapo rodando no celular, espelhado no PC (veja README, "Testar pelo celular")
@@ -57,6 +53,20 @@ cameras:
   - nome: "Tapo 2"
     fonte: "rtsp://${TAPO_USUARIO}:${TAPO_SENHA}@192.168.0.101:554/stream1"
     ativa: false
+
+# Grades: uma janela com várias câmeras (app Tapo no BlueStacks em visualização múltipla).
+# "posicoes" são os quadrados da grade: [esquerda, topo, direita, base] em fração da janela.
+# (medido com o BlueStacks em janela, com a coluna de anúncios à esquerda; se mudar o TAMANHO
+#  da janela, as posições precisam ser refeitas - a ORDEM das câmeras pode mudar à vontade)
+grades:
+  bluestacks:
+    fonte: "janela:BlueStacks App Player"
+    intervalo_s: 5          # de quanto em quanto tempo confere quem está em cada quadrado
+    posicoes:
+      - [0.1546, 0.2057, 0.4250, 0.5143]   # 1: em cima, à esquerda
+      - [0.4307, 0.2057, 0.7027, 0.5143]   # 2: em cima, à direita
+      - [0.1546, 0.5249, 0.4250, 0.8335]   # 3: embaixo, à esquerda
+      - [0.4307, 0.5249, 0.7027, 0.8335]   # 4: embaixo, à direita
 
 modelo:
   # Onde a detecção roda:

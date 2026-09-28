@@ -153,7 +153,8 @@ class FonteTela:
         if tipo == "janela":
             titulo, caixa = achar_janela(resto)
             if caixa is None:
-                self.erro = f'Janela "{resto}" não encontrada (abra o espelhamento e deixe a janela visível)'
+                self.erro = (f'Janela "{resto}" fechada ou MINIMIZADA - abra a janela e não minimize '
+                             f'(pode ficar atrás de outras janelas)')
             return caixa
         if resto:  # tela:x,y,w,h
             x, y, w, h = (int(v) for v in resto.split(","))
@@ -196,3 +197,16 @@ class FonteTela:
 
     def fechar(self):
         self._rodando = False
+
+
+_compartilhadas = {}
+_trava_compartilhadas = threading.Lock()
+
+
+def fonte_compartilhada(alvo):
+    """Uma única captura por janela, usada por todas as câmeras que vêm dela (grade do app)."""
+    with _trava_compartilhadas:
+        fonte = _compartilhadas.get(alvo)
+        if fonte is None or not fonte._rodando:
+            fonte = _compartilhadas[alvo] = FonteTela(alvo)
+        return fonte

@@ -195,6 +195,53 @@ def test_cor_na_duvida_vale_o_modelo():
         assert corrigir_cabecas(img, [Deteccao(tipo, (40, 10, 60, 30), 0.5)])[0].tipo == tipo
 
 
+def _cenarios(n=4):
+    """n "câmeras" com cenários bem diferentes (texturas aleatórias fixas)."""
+    import numpy as np
+    rng = np.random.default_rng(7)
+    return [(rng.integers(0, 255, (18, 32, 3), dtype=np.uint8).repeat(16, 0).repeat(16, 1)) for _ in range(n)]
+
+
+def test_grade_reconhece_cameras_em_qualquer_ordem():
+    import itertools
+    from identificar_cameras import assinatura, associar
+    cen = _cenarios()
+    refs = {f"cam{i}": [assinatura(c)] for i, c in enumerate(cen)}
+    for perm in itertools.permutations(range(4)):
+        pos, _, elim = associar([assinatura(cen[o]) for o in perm], refs)
+        assert elim is None and all(pos[f"cam{o}"] == destino for destino, o in enumerate(perm))
+
+
+def test_grade_camera_girada_reconhecida_por_eliminacao():
+    import numpy as np
+    from identificar_cameras import assinatura, associar
+    cen = _cenarios(5)
+    refs = {f"cam{i}": [assinatura(c)] for i, c in enumerate(cen[:4])}
+    celulas = [cen[0], cen[1], cen[4], cen[3]]  # cam2 "girou": agora mostra um cenário novo (cen[4])
+    pos, _, elim = associar([assinatura(c) for c in celulas], refs, com_imagem=[True] * 4)
+    assert elim == "cam2" and pos["cam2"] == 2
+
+
+def test_grade_nao_chuta_com_duas_desconhecidas():
+    from identificar_cameras import assinatura, associar
+    cen = _cenarios(6)
+    refs = {f"cam{i}": [assinatura(c)] for i, c in enumerate(cen[:4])}
+    celulas = [cen[0], cen[1], cen[4], cen[5]]  # cam2 e cam3 com cenário desconhecido
+    pos, _, elim = associar([assinatura(c) for c in celulas], refs, com_imagem=[True] * 4)
+    assert elim is None and "cam2" not in pos and "cam3" not in pos
+
+
+def test_grade_quadrado_vazio_nao_vira_camera():
+    import numpy as np
+    from identificar_cameras import assinatura, associar, tem_imagem
+    cen = _cenarios()
+    refs = {f"cam{i}": [assinatura(c)] for i, c in enumerate(cen)}
+    vazio = np.full_like(cen[0], 80)  # quadrado da grade com o botão "+"
+    celulas = [cen[0], cen[1], cen[2], vazio]  # cam3 saiu da grade
+    pos, _, elim = associar([assinatura(c) for c in celulas], refs, com_imagem=[tem_imagem(c) for c in celulas])
+    assert "cam3" not in pos and elim is None
+
+
 if __name__ == "__main__":
     testes = [f for n, f in dict(globals()).items() if n.startswith("test_")]
     for t in testes:
