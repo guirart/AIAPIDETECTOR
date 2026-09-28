@@ -88,8 +88,8 @@ regras:
   epis_obrigatorios: ["capacete", "colete"]
   # Segundos seguidos sem o EPI até virar infração (evita alarme falso)
   tempo_minimo_s: 2.0
-  # Depois de registrar, não registra a mesma pessoa de novo por este tempo
-  intervalo_repeticao_s: 60
+  # Depois de registrar, não registra a mesma pessoa de novo por este tempo (15 min)
+  intervalo_repeticao_s: 900
   # Ignora pessoas muito pequenas/distantes (altura da caixa em pixels)
   altura_minima_pessoa_px: 80
   # "Sem EPI" detectado sem nenhuma pessoa por perto é ignorado (evita alarme falso em
@@ -108,7 +108,8 @@ desempenho:
   processar_a_cada_n_quadros: 3
   # Câmera ao vivo: intervalo mínimo entre análises, POR CÂMERA. Com o Roboflow, cada análise
   # gasta 1 crédito (1 s = até 3.600 por hora por câmera); aumente para economizar.
-  intervalo_minimo_analise_s: 1.0
+  # 3 s por câmera: com 4 câmeras dá ~4.800 créditos/hora (antes, com 1 s, ~14.400)
+  intervalo_minimo_analise_s: 3.0
 
 alertas:
   som: true
