@@ -18,6 +18,8 @@ Câmera (webcam / RTSP / vídeo) → YOLO (detecção) → Regras (tempo mínimo
 | `regras.py` | Lógica de "essa pessoa está sem EPI?" |
 | `registro.py` | Salva infrações (SQLite) e fotos em `registros/AAAA-MM-DD/` |
 | `alertas.py` | Bipe + mensagem no console |
+| `coleta.py` | Prints de treino (automático + botão) na Área de Trabalho |
+| `limpar_repetidas.py` | Separa prints repetidos e mostra quantos únicos já existem |
 | `captura_tela.py` | Usa uma janela/região da tela como câmera (ex.: celular espelhado) |
 | `segredos.py` | Lê senhas/chaves das variáveis do Windows (nunca de arquivo) |
 | `relatorio.py` | Gera `registros/relatorio.html` com totais, gráfico por hora e fotos |
@@ -162,6 +164,11 @@ Com `coleta.ativa: true` no `config.yaml`, enquanto o monitor roda ele tira prin
 - sem ninguém: 1 a cada `sem_pessoa_a_cada_s` (padrão 10 min) — `…_vazia.jpg` (ensina que latas não são gente);
 - botão **📸 Tirar print** em cada câmera na tela — `…_manual.jpg`, na hora;
 - no máximo `limite_por_dia` prints automáticos por câmera. A tela mostra "Fotos p/ treino hoje".
+
+**Tirar os repetidos:** dois cliques em `limpar_repetidas.bat` (ou `python limpar_repetidas.py`).
+Prints quase iguais aos anteriores (ex.: pessoa parada) vão para `<dia>/repetidas/` — nada é apagado — e
+o resumo mostra quantos prints únicos já existem (meta da 1ª rodada: ~300). `--simular` só mostra o
+resultado; `--limiar 1` é mais rigoroso (exige mais diferença para manter).
 
 Revise a pasta antes de marcar as fotos: apague as que não são da câmera (ex.: app saiu da câmera).
 As fotos mostram funcionários: não vão para o GitHub. Se a Área de Trabalho estiver no OneDrive,
