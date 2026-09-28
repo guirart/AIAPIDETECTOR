@@ -19,6 +19,7 @@ import yaml
 
 from alertas import Alertas
 from coleta import Coletor
+from cor_capacete import corrigir_cabecas
 from registro import NOMES_EPI, Registro
 from regras import ControleTemporal, Deteccao, avaliar_quadro
 from segredos import expandir, mascarar
@@ -264,6 +265,8 @@ class Monitor:
         except Exception as e:  # rede instável, limite da API...: segue com o último resultado
             erro, deteccoes = str(e), self._deteccoes
             print(f"[ERRO na detecção] {e}", flush=True)
+        if erro is None and self.regras.get("verificar_cor_capacete", True):
+            deteccoes = corrigir_cabecas(quadro, deteccoes)
         situacoes = avaliar_quadro(deteccoes, self.regras["epis_obrigatorios"],
                                    self.regras["altura_minima_pessoa_px"],
                                    self.regras.get("exigir_pessoa", True),

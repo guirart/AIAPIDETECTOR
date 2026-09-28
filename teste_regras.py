@@ -161,6 +161,40 @@ def test_mesmo_lugar_depois_da_janela_registra_de_novo():
     assert len(c.atualizar(nova, 32.5)) == 1
 
 
+def _imagem_com(cor_bgr):
+    import numpy as np
+    img = np.full((100, 100, 3), 128, np.uint8)
+    img[10:30, 40:60] = cor_bgr  # "cabeça" na caixa (40, 10, 60, 30)
+    return img
+
+
+def test_cor_cabelo_escuro_nao_e_capacete():
+    from cor_capacete import corrigir_cabecas
+    d = Deteccao("capacete", (40, 10, 60, 30), 0.79)
+    assert corrigir_cabecas(_imagem_com((25, 25, 30)), [d])[0].tipo == "sem_capacete"
+
+
+def test_cor_capacete_verde_marcado_como_sem_vira_capacete():
+    from cor_capacete import corrigir_cabecas
+    d = Deteccao("sem_capacete", (40, 10, 60, 30), 0.62)
+    assert corrigir_cabecas(_imagem_com((140, 160, 20)), [d])[0].tipo == "capacete"  # verde-azulado vivo
+
+
+def test_cor_capacete_branco_continua_capacete():
+    from cor_capacete import corrigir_cabecas
+    d = Deteccao("capacete", (40, 10, 60, 30), 0.87)
+    assert corrigir_cabecas(_imagem_com((235, 235, 235)), [d])[0].tipo == "capacete"
+
+
+def test_cor_na_duvida_vale_o_modelo():
+    import numpy as np
+    from cor_capacete import corrigir_cabecas
+    img = _imagem_com((60, 60, 70))
+    img[10:16, 40:60] = (0, 200, 255)  # ~30% de cor viva: zona de dúvida (entre 15% e 45%)
+    for tipo in ("capacete", "sem_capacete"):
+        assert corrigir_cabecas(img, [Deteccao(tipo, (40, 10, 60, 30), 0.5)])[0].tipo == tipo
+
+
 if __name__ == "__main__":
     testes = [f for n, f in dict(globals()).items() if n.startswith("test_")]
     for t in testes:

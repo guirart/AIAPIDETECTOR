@@ -102,6 +102,10 @@ regras:
   #           não enxerga o capacete - isso não pode virar acusação).
   # false = qualquer "pessoa" detectada vale e EPI não encontrado = falta (pega mais, erra mais).
   confirmar_pela_cabeca: true
+  # Confere pela COR o que o modelo disse da cabeça: "capacete" sem cor nenhuma (cabelo escuro)
+  # vira "sem capacete"; "sem capacete" com cor viva (capacete verde, azul...) vira "capacete".
+  # Corrige erros do modelo em imagem pequena (grade do app) e atrás da tela de proteção.
+  verificar_cor_capacete: true
 
 desempenho:
   # Analisa 1 a cada N quadros (CPU sem placa de vídeo: 2 a 4 é bom)
